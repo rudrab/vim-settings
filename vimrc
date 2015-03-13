@@ -14,6 +14,7 @@ set smartindent
 set ruler
 set nu 
 
+set paste
 " Searching ignore case, be smart, highlight match
 set ignorecase
 set smartcase
@@ -62,6 +63,8 @@ Plugin 'tpope/vim-surround'
 Plugin 'edsono/vim-matchit'
 Plugin 'sjl/gundo.vim'
 Plugin 'bling/vim-airline'
+Plugin 'godlygeek/tabular'
+Plugin 'https://github.com/vim-scripts/c.vim.git'
 "My personal plugin
 Plugin 'SlateDark'
 Plugin 'file:///home/rudra/Devel/vimf90'
@@ -86,6 +89,7 @@ if has('gui_running')
   set guioptions-=e
   set t_Co=256
   set guitablabel=%M\ %t
+  set guifont=inconsolata
 endif   
 
 "Set Spell
@@ -114,7 +118,9 @@ set wildmenu
 set wildcharm=<C-z>
 set wildignore=*.swp,*.bak
 set wildignore+=*.pyc,*.class,*.sln,*.Master,*.csproj,*.csproj.user,*.cache,*.dll,*.pdb,*.min.*
-set wildignore+=*/.git/**/*,*/.hg/**/*,*/.svn/**/*
+set wildignore+=*/.git/*,*/.hg/*,*/.svn/*
+set wildignore+=*.o,*.mod
+set wildignore+=*.aux,*.bbl,*.blg,*.log,*.dbj,*.fdb_latexmk,*.fls
 set wildignore+=tags
 set wildignore+=*.tar.*
 set wildignorecase
@@ -198,7 +204,6 @@ let g:tex_pdf_map_keys = 0
 au FileType tex inoremap <silent> <F10> <Esc>:BuildTexPdf<CR>
 "autocmd Filetype tex nmap <buffer> <F9> :SCCompileAF -quiet <cr>:cw<cr>
 
-
 "
 "gundo-visualize your Vim undo tree
 nnoremap <F6> :GundoToggle<CR>
@@ -214,6 +219,15 @@ let g:UltiSnipsalways_use_first_snippet = 1
 let g:UltiSnipsExpandTrigger="<s-tab>"
 let g:UltiSnipsJumpForwardTrigger="<s-tab>"
 
+"let mapleader=','
+if exists(":Tabularize")
+  nmap <Leader>a= :Tabularize /=<CR>
+  vmap <Leader>a= :Tabularize /=<CR>
+  nmap <Leader>a& :Tabularize /&\zs<CR>
+  vmap <Leader>a& :Tabularize /&\zs<CR>
+  nmap <Leader>a: :Tabularize /:\zs<CR>
+  vmap <Leader>a: :Tabularize /:\zs<CR>
+endif
 " Delete trailing white space on save, useful for Python and CoffeeScript ;)
 func! DeleteTrailingWS()
   exe "normal mz"
@@ -223,85 +237,33 @@ endfunc
 autocmd BufWrite *.py :call DeleteTrailingWS()
 autocmd BufWrite *.f90 :call DeleteTrailingWS()
 
-" Create a scratch buffer with a list of files (full path names).
-" Argument is a specification like '*.c' to list *.c files (default is '*').
-" Can use '*.[ch]' to find *.c and *.h (see :help wildcard).
-" If command uses !, list includes matching files in all subdirectories.
-" If filespec contains a slash or backslash, the path in filespec is used;
-" otherwise, start searching in directory of current file.
-function! s:Listfiles(bang, filespec)
-  if a:filespec =~ '[/\\]'  " if contains path separator (slash or backslash)
-    let dir = fnamemodify(a:filespec, ':p:h')
-    let fnm = fnamemodify(a:filespec, ':p:t')
-  else
-    let dir = expand('%:p:h')  " directory of current file
-    let fnm = a:filespec
-  endif
-  if empty(fnm)
-    let fnm = '*'
-  endif
-  if !empty(a:bang)
-    let fnm = '**/' . fnm
-  endif
-  let files = map(globpath(dir, fnm, 0, 1), 'fnamemodify(v:val, ":t:r")')  
-  echo files len(files)
-  echo 'dir=' dir ' fnm=' fnm ' len(files)=' len(files)
-  if empty(files)
-    echo 'No matching files'
-    return
-  endif
-  new
-  setlocal buftype=nofile bufhidden=hide noswapfile
-  call append(line('$'), files)
-  1d  " delete initial empty line
-  " sort i  " sort, ignoring case
-endfunction
-command! -bang -nargs=? Listfiles call s:Listfiles('<bang>', '<args>')
-
 set completeopt=longest,menuone
-"fun! CompleteUse(findstart, base)
-"  if a:findstart
-"    " locate the start of the word
-"    let line = getline('.')
-"    let start = col('.') - 1
-"    while start > 0 && line[start - 1] =~ '\a'
-"      let start -= 1
-"    endwhile
-"    return start
-"  else
-"    " find months matching with "a:base"
-"    let res = []
-"    let dir = "./src/"
-"    let fnm = "*.f90"
-"    let files = map(globpath(dir, fnm, 0, 1), 'fnamemodify(v:val, ":t:r")')
-"    for m in files
-"      if m =~ '^' . a:base
-"        call add(res, m)
-"      endif
-"    endfor
-"    return res
-"  endif
-"endfun
-"command! Common call CompleteMonths('<bang>', '<args>')
-"set completefunc=CompleteUse
 
-inoremap \use use <C-R>=ListMods()<CR>
-"func! ListMods()
-  "let dir = "./src/"
-  "let dir2 = "./"
-  "let fnm = "*.f90"
-  "let files = map(globpath(dir, fnm, 0, 1), 'fnamemodify(v:val, ":t:r")')
-  "let files2 = map(globpath(dir2, fnm, 0, 1), 'fnamemodify(v:val, ":t:r")')
-  "call extend(files, files2)
-  "call complete(col('.'), files)
-  "return ''
-"endfunc
-
-
-func! ListMods()
-  if ! exists('g:modpath')
-    let g:modpath = 'src,,.'
+" Build Fortran project using autotools
+"
+" First, autoscan
+func! MakeAConf()
+  if ! exists ('g:rootpath')
+    let g:rootpath = ',.'
   endif
-  call complete(col('.'), map(globpath(g:modpath, '*.f90', 0, 1), 'fnamemodify(v:val, ":t:r")'))
-  return ''
+  let exAScan = executable("autoscan")
+  if (exAScan == 1)
+    call system("autoscan")
+    echo "Check and update configure.scan and save it as configure.ac"
+    badd configure.scan
+  endif
+endfunc
+
+func! MakeAMake()
+  if ! exists ('g:rootpath')
+    let g:rootpath = ',.'
+  endif
+  let exAScan = executable("makedepf90")
+  if (exAScan == 1)
+    call system("makedepf90 src/*.f90 >depend2.mk")
+  endif
+  call system("ls src/*.f90 > flsts")
+  let cdir = expand('%:p:h:t')
+  "Generate Makefile.am
+  echo(printf("bin_PROGRAMS = :%12s",cdir))
 endfunc
