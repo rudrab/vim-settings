@@ -1,8 +1,14 @@
+"**********************************************************
+"                          VIMRC
+"                      Rudra Banerjee    
+"                      Last Modified: 18/03/2015
+"**********************************************************
+
 "General Settings
-"
+"                        
 "How mani line vim should remember
 set history=700
-
+set undofile
 "because vim is not vi
 set nocompatible
 
@@ -14,12 +20,13 @@ set smartindent
 set ruler
 set nu 
 
-set paste
+"set paste
 " Searching ignore case, be smart, highlight match
 set ignorecase
 set smartcase
 set hlsearch
 set incsearch 
+
 " Visual mode pressing * or # searches for the current selection
 vnoremap <silent> * :call VisualSelection('f', '')<CR>
 vnoremap <silent> # :call VisualSelection('b', '')<CR>
@@ -64,10 +71,10 @@ Plugin 'edsono/vim-matchit'
 Plugin 'sjl/gundo.vim'
 Plugin 'bling/vim-airline'
 Plugin 'godlygeek/tabular'
-Plugin 'https://github.com/vim-scripts/c.vim.git'
+"Plugin 'Shougo/neocomplete.vim'
 "My personal plugin
 Plugin 'SlateDark'
-Plugin 'file:///home/rudra/Devel/vimf90'
+Plugin 'vimf90', {'pinned' : 1}
 call vundle#end()
 
 " Vundle done
@@ -138,7 +145,7 @@ inoremap {} {<esc>o}<++><esc>O
 inoremap '' ''<++><esc>4hi
 inoremap "" ""<++><esc>4hi
 inoremap << <><++><esc>4hi
-inoremap >> <><++><esc>4hi
+inoremap <> <><++><esc>4hi
 
 vnoremap y "+y
 vnoremap x "+x
@@ -196,14 +203,13 @@ nmap <silent> <A-Left> :wincmd h<CR>
 nmap <silent> <A-Right> :wincmd l<CR>
 
 "SingleCompile
-":nnoremap <Leader>lf :up!<cr>:! ifort %<cr>
-"au FileType fortran nnoremap <buffer> <Leader>lm :up!<cr>:! ifort %<cr>
 nmap <F10> :SCCompile<cr>:cw<cr> 
 nmap <F11> :SCCompileRun<cr> 
 let g:tex_pdf_map_keys = 0
 au FileType tex inoremap <silent> <F10> <Esc>:BuildTexPdf<CR>
-"autocmd Filetype tex nmap <buffer> <F9> :SCCompileAF -quiet <cr>:cw<cr>
-
+"
+"Neocomplete
+let g:neocomplete#enable_at_startup = 1
 "
 "gundo-visualize your Vim undo tree
 nnoremap <F6> :GundoToggle<CR>
@@ -238,32 +244,3 @@ autocmd BufWrite *.py :call DeleteTrailingWS()
 autocmd BufWrite *.f90 :call DeleteTrailingWS()
 
 set completeopt=longest,menuone
-
-" Build Fortran project using autotools
-"
-" First, autoscan
-func! MakeAConf()
-  if ! exists ('g:rootpath')
-    let g:rootpath = ',.'
-  endif
-  let exAScan = executable("autoscan")
-  if (exAScan == 1)
-    call system("autoscan")
-    echo "Check and update configure.scan and save it as configure.ac"
-    badd configure.scan
-  endif
-endfunc
-
-func! MakeAMake()
-  if ! exists ('g:rootpath')
-    let g:rootpath = ',.'
-  endif
-  let exAScan = executable("makedepf90")
-  if (exAScan == 1)
-    call system("makedepf90 src/*.f90 >depend2.mk")
-  endif
-  call system("ls src/*.f90 > flsts")
-  let cdir = expand('%:p:h:t')
-  "Generate Makefile.am
-  echo(printf("bin_PROGRAMS = :%12s",cdir))
-endfunc
