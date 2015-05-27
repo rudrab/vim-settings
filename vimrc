@@ -1,7 +1,7 @@
 "**********************************************************
 "                          VIMRC
 "                      Rudra Banerjee    
-"       Last Modified : Tue 19 May 2015 20:00:46 BST
+"       Last Modified : Sun 24 May 2015 12:48:49 PM BST
 "**********************************************************
 "General Settings
 "How mani line vim should remember
@@ -75,8 +75,8 @@ Plugin 'https://github.com/magic-dot-files/TagHighlight'
 "Plugin 'Shougo/neocomplete.vim'
 "My personal plugin
 Plugin 'SlateDark'
-Plugin 'file:///home/rudra/Devel/vimf90'
-Plugin 'file:///home/rudra/Devel/vim-gnome-google/'
+Plugin 'vimf90' , {'pinned' : 1}
+Plugin 'vim-gnome-google' , {'pinned' : 1}
 call vundle#end()
 
 " Vundle done
